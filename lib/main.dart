@@ -3,6 +3,8 @@ import 'package:eprojectbaby/frontend/signup.dart';
 import 'package:eprojectbaby/frontend/splashscreen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // <--- ADD THIS
@@ -11,7 +13,10 @@ void main() async {
   runApp(
     MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: Signup(),
+      theme: ThemeData(
+    textTheme: GoogleFonts.poppinsTextTheme(),
+  ),
+      home: Splashscreen(),
       routes: {
         "/signup":(context)=> Signup(),
         // "/add":(context)=> (isLoggedIn && isAdmin) ? Addproduct(): Login(),
