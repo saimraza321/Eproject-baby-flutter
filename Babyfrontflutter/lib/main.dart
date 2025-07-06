@@ -1,12 +1,13 @@
 import 'package:device_preview/device_preview.dart';
+import 'package:eprojectbaby/frontend/login.dart';
+import 'package:eprojectbaby/frontend/onboarding.dart';
+import 'package:eprojectbaby/frontend/signup.dart';
+import 'package:eprojectbaby/frontend/splashscreen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
 import 'package:eprojectbaby/firebase_options.dart';
-import 'package:eprojectbaby/frontend/signup.dart';
-import 'package:eprojectbaby/frontend/splashscreen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,7 +26,6 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      useInheritedMediaQuery: true,
       locale: DevicePreview.locale(context),
       builder: DevicePreview.appBuilder,
       theme: ThemeData(
@@ -38,8 +38,9 @@ class MyApp extends StatelessWidget {
       ),
       home: Splashscreen(),
       routes: {
-        "/signup": (context) => Signup(),
-        // Add other routes as needed
+        "/onboarding": (context) => OnboardingScreen(),
+        '/login': (context) => const LoginPage(),
+        '/signup': (context) => const SignupPage(),
       },
     );
   }

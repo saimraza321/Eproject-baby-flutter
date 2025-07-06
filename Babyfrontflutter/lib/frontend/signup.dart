@@ -1,200 +1,167 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
+// lib/frontend/signup.dart
 
-class Signup extends StatefulWidget {
-  const Signup({ Key? key }) : super(key: key);
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
+class SignupPage extends StatefulWidget {
+  const SignupPage({super.key});
 
   @override
-  _SignupState createState() => _SignupState();
+  State<SignupPage> createState() => _SignupPageState();
 }
 
-class _SignupState extends State<Signup> {
-  final GlobalKey<FormState> _signupKey = GlobalKey<FormState>(); // unique key
-  TextEditingController userNameController = TextEditingController();
-  TextEditingController emailController = TextEditingController();
-  TextEditingController passController = TextEditingController();
-  var users = FirebaseFirestore.instance.collection("users");
+class _SignupPageState extends State<SignupPage> {
+  final nameController = TextEditingController();
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+  bool _obscurePassword = true;
 
-  void RegisterUser() async {
-    if (_signupKey.currentState!.validate()) {
-      try {
-        final credential = await FirebaseAuth.instance
-            .createUserWithEmailAndPassword(
-              email: emailController.text,
-              password: passController.text,
-            );
-        print("sign up success");
-        print(credential.user!.uid);
+  Future<void> signupUser(String name, String email, String password) async {
+    final url = Uri.parse("http://127.0.0.1:8000/api/signup");
 
-        // adding user details in user collection too
-        // Add the product to the database
-        users
-            .doc(credential.user!.uid)
-            .set({
-              'email': emailController.text,
-              'password': passController.text,
-              'username': userNameController.text,
-              'role': "user",
-            })
-            .then(
-              (value) => {
-                emailController.clear(),
-                passController.clear(),
-                userNameController.clear(),
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({"name": name, "email": email, "password": password}),
+      );
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      "Registeration Successfull..✔ Please login now",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    backgroundColor: const Color.fromARGB(255, 43, 62, 188),
-                  ),
-                ),
-
-                Navigator.pushNamed(context, "/login"),
-              },
-            )
-            .catchError(
-              (error) => {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Failed to register user")),
-                ),
-              },
-            );
-      } on FirebaseAuthException catch (e) {
-        if (e.code == 'weak-password') {
-          print('The password provided is too weak.');
-        } else if (e.code == 'email-already-in-use') {
-          print('The account already exists for that email.');
-        }
-      } catch (e) {
-        print(e);
+      if (response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Signup Success: ${data['message']}")),
+        );
+        Navigator.pushNamed(context, "/login");
+      } else {
+        final error = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Signup Failed: ${error['message']}")),
+        );
       }
-    } else {
-      print("Please insert valid details");
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: $e")));
     }
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
-      // drawer: MyDrawer(),
-      body: Center(
-        child: Container(
-          height: 700,
-          width: 350,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(50),
-            border: Border.all(
-              width: 1,
-              color: Colors.grey,
-              style: BorderStyle.solid,
-            ),
-          ),
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 10),
-            child: Form(
-              key: _signupKey,
-              child: Column(
-                children: [
-                  SizedBox(height: 25),
-                  Text(
-                    "Create an account..",
-                    style: TextStyle(
-                      color: Colors.deepPurple,
-                      fontSize: 32,
-                      fontWeight: FontWeight.w300,
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  TextFormField(
-                    validator: (value) {
-                      if (value!.isEmpty) {
-                        return ("Username is required");
-                      }
-                      return null;
-                    },
-                    controller: userNameController,
-                    decoration: InputDecoration(
-                      labelText: "Username",
-                      prefixIcon: Icon(Icons.person),
-                      border: OutlineInputBorder(),
-                      suffixIcon: Icon(Icons.person_2),
-                      hintText: "enter username",
-                    ),
-                  ),
-                  // email
-                  SizedBox(height: 20),
-                  TextFormField(
-                    validator: (value) {
-                      if (value!.isEmpty) {
-                        return ("email is required");
-                      }
-                      if (!RegExp(
-                        r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
-                      ).hasMatch(value)) {
-                        return ("email format is not valid");
-                      }
-                      return null;
-                    },
-                    controller: emailController,
-                    decoration: InputDecoration(
-                      labelText: "Email",
-                      prefixIcon: Icon(Icons.mail),
-                      border: OutlineInputBorder(),
-                      hintText: "enter email",
-                    ),
-                  ),
-
-                  //password
-                  SizedBox(height: 20),
-                  TextFormField(
-                    validator: (value) {
-                      if (value!.isEmpty) {
-                        return ("password is required");
-                      }
-                      if (!RegExp(
-                        r'^(?=.*[a-z])(?=.*\d)[A-Za-z\d@$!%*?&]{5,}$',
-                      ).hasMatch(value)) {
-                        return ("password must have an uppercase,lowercase,digit, special character and have at least 5 characters");
-                      }
-                      return null;
-                    },
-                    controller: passController,
-                    obscureText: true,
-                    decoration: InputDecoration(
-                      labelText: "Password",
-                      prefixIcon: Icon(Icons.password),
-                      border: OutlineInputBorder(),
-                      suffixIcon: Icon(Icons.remove_red_eye),
-                      hintText: "enter password",
-                    ),
-                  ),
-
-                  SizedBox(height: 20),
-                  // submit button
-                  ElevatedButton(
-                    onPressed: RegisterUser,
-                    child: Text("Sign up"),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      // Navigator.pushNamed(context, "/login");
-                    },
-                    child: Text("Already have an account? Login now"),
-                  ),
-                  // TextField()
-                ],
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 20),
+              const Text(
+                'Sign up',
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
-            ),
+              const SizedBox(height: 10),
+              const Text(
+                'Create your account by filling the information below.',
+                style: TextStyle(fontSize: 16, color: Colors.black54),
+              ),
+              const SizedBox(height: 30),
+
+              // Name
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: "Full Name",
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Email or Phone
+              TextField(
+                controller: emailController,
+                decoration: const InputDecoration(
+                  labelText: "Email id / Mobile no",
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Password
+              TextField(
+                controller: passwordController,
+                obscureText: _obscurePassword,
+                decoration: InputDecoration(
+                  labelText: "Password",
+                  border: const OutlineInputBorder(),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 30),
+
+              // Sign Up Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepPurple,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  onPressed: () {
+                    final name = nameController.text.trim();
+                    final email = emailController.text.trim();
+                    final password = passwordController.text.trim();
+
+                    if (name.isEmpty || email.isEmpty || password.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Please fill all fields."),
+                        ),
+                      );
+                      return;
+                    }
+
+                    signupUser(name, email, password);
+                  },
+                  child: const Text("Sign up"),
+                ),
+              ),
+
+              const Spacer(),
+
+              // Login Link
+              Center(
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, "/login");
+                  },
+                  child: const Text("Already have an account? Sign in"),
+                ),
+              ),
+            ],
           ),
         ),
       ),
-      // drawer: ,
-      // bottomNavigationBar: ,
     );
   }
 }
