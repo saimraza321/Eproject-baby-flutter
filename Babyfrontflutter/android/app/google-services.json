@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "381334136006",
+    "project_id": "chapatti-af935",
+    "storage_bucket": "chapatti-af935.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:381334136006:android:aa1b9b70b9b08c007f63c7",
+        "android_client_info": {
+          "package_name": "com.example.eprojectbaby"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBKwwpMbLDk5biK5dVrdsHUL_Db2FR39ZA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:381334136006:android:1079e0f98eb78c617f63c7",
+        "android_client_info": {
+          "package_name": "com.example.firebase_crud"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBKwwpMbLDk5biK5dVrdsHUL_Db2FR39ZA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
