@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'product_detail_page.dart'; // Make sure this file exists
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+import 'product_detail_page.dart';
 
 void main() {
   runApp(MyApp());
@@ -8,15 +11,84 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: HomePage(),
-      debugShowCheckedModeBanner: false,
+    return MaterialApp(home: HomePage(), debugShowCheckedModeBanner: false);
+  }
+}
+
+class Product {
+  final int id; // <-- ADD THIS
+  final String name;
+  final String image;
+  final String description;
+  final double originalPrice;
+  final double discountedPrice;
+
+  Product({
+    required this.id, // <-- ADD THIS
+    required this.name,
+    required this.image,
+    required this.description,
+    required this.originalPrice,
+    required this.discountedPrice,
+  });
+
+  factory Product.fromJson(Map<String, dynamic> json) {
+    return Product(
+      id: json['id'], // <-- ADD THIS
+      name: json['name'],
+      image: json['image'],
+      description: json['description'],
+      originalPrice: double.parse(json['original_price'].toString()),
+      discountedPrice: double.parse(json['discounted_price'].toString()),
     );
   }
 }
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
   final PageController _pageController = PageController();
+  List<Product> _allProducts = [];
+  List<Product> _filteredProducts = [];
+  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    fetchProducts();
+  }
+
+  Future<void> fetchProducts() async {
+    final response = await http.get(
+      Uri.parse("http://127.0.0.1:8000/api/products"),
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      List products = data['products'];
+      setState(() {
+        _allProducts = products.map((json) => Product.fromJson(json)).toList();
+        _filteredProducts = _allProducts;
+      });
+    } else {
+      throw Exception("Failed to load products");
+    }
+  }
+
+  void _filterProducts(String query) {
+    setState(() {
+      _searchQuery = query;
+      _filteredProducts =
+          _allProducts.where((product) {
+            final name = product.name.toLowerCase();
+            final desc = product.description.toLowerCase();
+            final search = query.toLowerCase();
+            return name.contains(search) || desc.contains(search);
+          }).toList();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,9 +98,11 @@ class HomePage extends StatelessWidget {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // Top bar
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 child: Row(
                   children: [
                     Icon(Icons.menu),
@@ -36,8 +110,17 @@ class HomePage extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: const [
-                        Text("Shop for", style: TextStyle(fontSize: 14, color: Colors.grey)),
-                        Text("Liverce 5 yr", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        Text(
+                          "Shop for",
+                          style: TextStyle(fontSize: 14, color: Colors.grey),
+                        ),
+                        Text(
+                          "Liverce 5 yr",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ],
                     ),
                     Spacer(),
@@ -46,7 +129,6 @@ class HomePage extends StatelessWidget {
                 ),
               ),
 
-              // Search Bar
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Container(
@@ -61,8 +143,9 @@ class HomePage extends StatelessWidget {
                       SizedBox(width: 10),
                       Expanded(
                         child: TextField(
+                          onChanged: _filterProducts,
                           decoration: InputDecoration(
-                            hintText: 'Search',
+                            hintText: 'Search by name or description',
                             border: InputBorder.none,
                           ),
                         ),
@@ -75,7 +158,6 @@ class HomePage extends StatelessWidget {
 
               SizedBox(height: 16),
 
-              // Banner PageView Slider
               Container(
                 height: 160,
                 child: PageView(
@@ -93,13 +175,16 @@ class HomePage extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(
-                    4,
+                    3,
                     (index) => Container(
                       margin: EdgeInsets.symmetric(horizontal: 4),
                       width: 8,
                       height: 8,
                       decoration: BoxDecoration(
-                        color: index == 0 ? const Color(0xFF9C43F0) : Colors.grey.shade300,
+                        color:
+                            index == 0
+                                ? const Color(0xFF9C43F0)
+                                : Colors.grey.shade300,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -109,14 +194,16 @@ class HomePage extends StatelessWidget {
 
               SizedBox(height: 16),
 
-              // Shop by category
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Row(
                   children: [
                     Text(
                       'Shop by category',
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -124,77 +211,30 @@ class HomePage extends StatelessWidget {
 
               SizedBox(height: 10),
 
-              // Category Product Cards
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    ProductCard(
-                      imageUrl: 'images/pink_jacket.png',
-                      productName: 'Pink winter jacket',
-                      originalPrice: 220.00,
-                      discountedPrice: 120.00,
-                      description: 'Fluffy pink jacket for winter. Great comfort and warmth.',
+              _filteredProducts.isEmpty
+                  ? Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                  : Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children:
+                          _filteredProducts.map((product) {
+                            return ProductCard(
+                              productId: product.id,
+                              imageUrl:
+                                  "http://127.0.0.1:8000/images/${product.image}",
+                              productName: product.name,
+                              originalPrice: product.originalPrice,
+                              discountedPrice: product.discountedPrice,
+                              description: product.description,
+                            );
+                          }).toList(),
                     ),
-                    SizedBox(width: 10),
-                    ProductCard(
-                      imageUrl: 'images/blue_jumpsuit.png',
-                      productName: 'Blue Jumpsuit',
-                      originalPrice: 200.00,
-                      discountedPrice: 100.00,
-                      description: 'Warm denim jumpsuit perfect for cold seasons.',
-                    ),
-                  ],
-                ),
-              ),
-
-              SizedBox(height: 20),
-
-              // Trending items
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  children: [
-                    Text(
-                      'Trending items',
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                    ),
-                    Spacer(),
-                    TextButton(
-                      onPressed: () {},
-                      child: Text("See all"),
-                    )
-                  ],
-                ),
-              ),
-
-              SizedBox(height: 10),
-
-              // Trending Product Cards
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    ProductCard(
-                      imageUrl: 'images/pink_jacket.png',
-                      productName: 'Pink winter jacket',
-                      originalPrice: 220.00,
-                      discountedPrice: 120.00,
-                      description: 'Fluffy pink jacket for winter. Great comfort and warmth.',
-                    ),
-                    SizedBox(width: 10),
-                    ProductCard(
-                      imageUrl: 'images/blue_jumpsuit.png',
-                      productName: 'Blue Jumpsuit',
-                      originalPrice: 200.00,
-                      discountedPrice: 100.00,
-                      description: 'Warm denim jumpsuit perfect for cold seasons.',
-                    ),
-                  ],
-                ),
-              ),
+                  ),
 
               SizedBox(height: 30),
             ],
@@ -209,16 +249,14 @@ class HomePage extends StatelessWidget {
       margin: EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        image: DecorationImage(
-          image: AssetImage(imagePath),
-          fit: BoxFit.cover,
-        ),
+        image: DecorationImage(image: AssetImage(imagePath), fit: BoxFit.cover),
       ),
     );
   }
 }
 
 class ProductCard extends StatelessWidget {
+  final int productId; // <-- ADD THIS
   final String imageUrl;
   final String productName;
   final double originalPrice;
@@ -226,6 +264,7 @@ class ProductCard extends StatelessWidget {
   final String description;
 
   const ProductCard({
+    required this.productId, // <-- ADD THIS
     required this.imageUrl,
     required this.productName,
     required this.originalPrice,
@@ -240,16 +279,19 @@ class ProductCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => ProductDetailPage(
-              title: productName,
-              image: imageUrl,
-              price: discountedPrice,
-              originalPrice: originalPrice,
-              description: description,
-            ),
+            builder:
+                (_) => ProductDetailPage(
+                  productId: productId, // ✅ Now this works!
+                  title: productName,
+                  image: imageUrl,
+                  price: discountedPrice,
+                  originalPrice: originalPrice,
+                  description: description,
+                ),
           ),
         );
       },
+
       child: Container(
         width: 160,
         padding: EdgeInsets.all(8),
@@ -264,7 +306,12 @@ class ProductCard extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: Image.asset(imageUrl, height: 120, fit: BoxFit.cover, width: double.infinity),
+                  child: Image.network(
+                    imageUrl,
+                    height: 120,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                  ),
                 ),
                 Positioned(
                   top: 8,
@@ -275,7 +322,10 @@ class ProductCard extends StatelessWidget {
                       color: Colors.black,
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: Text("50% off", style: TextStyle(color: Colors.white, fontSize: 12)),
+                    child: Text(
+                      "50% off",
+                      style: TextStyle(color: Colors.white, fontSize: 12),
+                    ),
                   ),
                 ),
                 Positioned(
@@ -287,14 +337,26 @@ class ProductCard extends StatelessWidget {
             ),
             SizedBox(height: 8),
             Text(productName, style: TextStyle(fontWeight: FontWeight.bold)),
-            Text("Multiple sizes available", style: TextStyle(fontSize: 12, color: Colors.grey)),
+            Text(
+              "Multiple sizes available",
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
             SizedBox(height: 4),
             Row(
               children: [
-                Text('\$$discountedPrice', style: TextStyle(fontWeight: FontWeight.bold)),
+                Text(
+                  '\$$discountedPrice',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 SizedBox(width: 8),
-                Text('\$$originalPrice',
-                    style: TextStyle(fontSize: 12, decoration: TextDecoration.lineThrough, color: Colors.grey)),
+                Text(
+                  '\$$originalPrice',
+                  style: TextStyle(
+                    fontSize: 12,
+                    decoration: TextDecoration.lineThrough,
+                    color: Colors.grey,
+                  ),
+                ),
               ],
             ),
           ],

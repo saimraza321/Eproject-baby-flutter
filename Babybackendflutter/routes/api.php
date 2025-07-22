@@ -20,7 +20,12 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::post('/signup', [AuthController::class, 'signup']);
 
 Route::post('/login', [AuthController::class, 'login']);
+// routes/api.php
+use App\Http\Controllers\API\ProductController;
+use App\Http\Controllers\API\CartController;
 
+Route::get('/products', [ProductController::class, 'index']);
+Route::post('/cart', [CartController::class, 'addToCart']);
 
 Route::post('/logout', [AuthController::class, 'logout']);
 

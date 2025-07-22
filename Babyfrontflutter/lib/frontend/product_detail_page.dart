@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class ProductDetailPage extends StatelessWidget {
+  final int productId;
   final String image;
   final String title;
   final double price;
@@ -8,12 +11,47 @@ class ProductDetailPage extends StatelessWidget {
   final String description;
 
   ProductDetailPage({
+    required this.productId,
     required this.image,
     required this.title,
     required this.price,
     required this.originalPrice,
     required this.description,
   });
+
+  Future<void> addToCart(BuildContext context) async {
+    final url = Uri.parse("http://127.0.0.1:8000/api/cart");
+
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({
+        'user_id': 1, // fixed for now
+        'product_id': productId,
+        'quantity': 1,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final res = jsonDecode(response.body);
+      if (res['status'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('✅ ${res['message']}')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('⚠️ Failed to add to cart')),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('❌ Server error')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,13 +70,13 @@ class ProductDetailPage extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Main Image with Thumbnails on top
+            // Main Image
             Stack(
               alignment: Alignment.bottomCenter,
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(16),
-                  child: Image.asset(
+                  child: Image.network(
                     image,
                     height: 500,
                     fit: BoxFit.cover,
@@ -71,7 +109,7 @@ class ProductDetailPage extends StatelessWidget {
 
             SizedBox(height: 16),
 
-            // Product Title
+            // Title
             Row(
               children: [
                 Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 26)),
@@ -104,49 +142,18 @@ class ProductDetailPage extends StatelessWidget {
 
             // Buttons
             Row(
-            children: [
-              // Add to Wishlist
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {},
-                  child: Text(
-                    "Add to wishlist",
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Color(0xFF9C43F0),
-                    side: BorderSide(color: Color(0xFF9C43F0)),
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(width: 10),
-
-              // Add to Cart (with gradient background)
-              Expanded(
-                child: Container(
-                  height: 48,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF9C43F0), Color(0xFF722BFB)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: ElevatedButton(
+              children: [
+                // Add to Wishlist
+                Expanded(
+                  child: OutlinedButton(
                     onPressed: () {},
                     child: Text(
-                      "Add to cart",
+                      "Add to wishlist",
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
-                      foregroundColor: Colors.white,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Color(0xFF9C43F0),
+                      side: BorderSide(color: Color(0xFF9C43F0)),
                       padding: EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -154,10 +161,40 @@ class ProductDetailPage extends StatelessWidget {
                     ),
                   ),
                 ),
-              ),
-            ],
-          )
+                SizedBox(width: 10),
 
+                // Add to Cart
+                Expanded(
+                  child: Container(
+                    height: 48,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF9C43F0), Color(0xFF722BFB)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: ElevatedButton(
+                      onPressed: () => addToCart(context),
+                      child: Text(
+                        "Add to cart",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -171,7 +208,10 @@ class ProductDetailPage extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.grey.shade300),
-        image: DecorationImage(image: AssetImage(img), fit: BoxFit.cover),
+        image: DecorationImage(
+          image: NetworkImage(img),
+          fit: BoxFit.cover,
+        ),
       ),
     );
   }
