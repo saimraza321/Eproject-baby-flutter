@@ -14,7 +14,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<Map<String, String>> data = [
     {
-      "image": "images/kids.png",
+      "image": "assets/kids.png",
       "title1": "Sale\n ",
       "highlight": "everyday,",
       "title2": " all of happy\nnow.",
@@ -22,7 +22,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       "button": "Next",
     },
     {
-      "image": "images/girl.png",
+      "image": "assets/girl.png",
       "title1": "Pick every ",
       "highlight": "clothes",
       "title2": " that you want!",

@@ -1,34 +1,47 @@
 import 'package:flutter/material.dart';
-import 'delivered.dart';
+import 'processing.dart';
 import 'cancelled.dart';
 
-class Processing extends StatefulWidget {
-  const Processing({Key? key}) : super(key: key);
+class Delivered extends StatefulWidget {
+  const Delivered({Key? key}) : super(key: key);
 
   @override
-  _ProcessingState createState() => _ProcessingState();
+  _DeliveredState createState() => _DeliveredState();
 }
 
-class _ProcessingState extends State<Processing> {
-  int selectedIndex = 0;
-
+class _DeliveredState extends State<Delivered> {
+  int selectedIndex = 1; // Default to "Delivered" tab
   final List<String> tabs = ['Processing', 'Delivered', 'Canceled'];
+
+  // Slide transition helper
+  void navigateWithCustomSlide(BuildContext context, Widget page, Offset beginOffset) {
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 300),
+        pageBuilder: (context, animation, secondaryAnimation) => page,
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          final tween = Tween(begin: beginOffset, end: Offset.zero)
+              .chain(CurveTween(curve: Curves.easeInOut));
+          return SlideTransition(
+            position: animation.drive(tween),
+            child: child,
+          );
+        },
+      ),
+    );
+  }
 
   void _onTabTap(int index) {
     if (index == selectedIndex) return;
 
-    if (index == 1) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const Delivered()),
-      );
+    if (index == 0) {
+      // Left to right (Delivered → Processing)
+      navigateWithCustomSlide(context, const Processing(), const Offset(-1.0, 0.0));
     } else if (index == 2) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const Cancelled()),
-      );
+      // Right to left (Delivered → Cancelled)
+      navigateWithCustomSlide(context, const Cancelled(), const Offset(1.0, 0.0));
     }
-    // index 0 (Processing) already active
   }
 
   @override
@@ -72,21 +85,22 @@ class _ProcessingState extends State<Processing> {
                 ),
               ),
             ),
-
             const SizedBox(height: 25),
             buildCartItem(
               imageUrl: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=150&q=80',
               title: 'Nike Sneakers',
               colorAndSize: 'Red  |  Size 40',
-              trackingId: 'IWH345891',
+              deliveredDate: '6 July 2025',
               price: '\$120.00',
+              fakeRating: 4,
             ),
             buildCartItem(
               imageUrl: "https://up.yimg.com/ib/th/id/OIP.johRj4ZhziWlMPaooxBmKwHaHa?pid=Api&rs=1&c=1&qlt=95&w=121&h=121",
               title: 'Yellow shirt',
               colorAndSize: 'Bright yellow  |  9M - 12M',
-              trackingId: 'IWH345892',
+              deliveredDate: '6 July 2025',
               price: '\$120.25',
+              fakeRating: 5,
             ),
           ],
         ),
@@ -98,8 +112,9 @@ class _ProcessingState extends State<Processing> {
     required String imageUrl,
     required String title,
     required String colorAndSize,
-    required String trackingId,
+    required String deliveredDate,
     required String price,
+    required int fakeRating,
   }) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -147,8 +162,12 @@ class _ProcessingState extends State<Processing> {
                     Text(colorAndSize, style: const TextStyle(fontSize: 14)),
                     const SizedBox(height: 2),
                     Text(
-                      "Tracking id : $trackingId",
-                      style: const TextStyle(fontSize: 13, color: Colors.black54),
+                      "Delivered on: $deliveredDate",
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF57AFEF),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     RichText(
@@ -175,19 +194,59 @@ class _ProcessingState extends State<Processing> {
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
-                 color: const Color(0xFFF1E9FF),
+              color: const Color(0xFFEAEAEA),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: TextButton(
+              onPressed: () {},
+              child: const Text(
+                "Exchange / Return",
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1E9FF),
               borderRadius: BorderRadius.circular(8),
             ),
             child: TextButton(
               onPressed: () {},
               child: const Text(
                 "View Product details",
-                 style: TextStyle(
-                 color: Color(0xFF8D4EF3),
+                style: TextStyle(
+                  color: Color(0xFF8D4EF3),
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Text(
+                "Rate Product:",
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Row(
+                children: List.generate(5, (index) {
+                  return Icon(
+                    Icons.star,
+                    size: 20,
+                    color: index < fakeRating ? Colors.amber : Colors.grey[300],
+                  );
+                }),
+              ),
+            ],
           ),
         ],
       ),

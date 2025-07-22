@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:eprojectbaby/frontend/processing.dart';
+// import 'package:eprojectbaby/frontend/processing.dart';
 import 'package:http/http.dart' as http;
 
 class LoginPage extends StatefulWidget {
@@ -39,11 +39,11 @@ class _LoginPageState extends State<LoginPage> {
         context,
       ).showSnackBar(const SnackBar(content: Text("Login successful!")));
 
-      // ✅ Navigate to ProcessingPage
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => ProcessingPage()),
-      );
+      // // ✅ Navigate to ProcessingPage
+      // Navigator.pushReplacement(
+      //   context,
+      //   MaterialPageRoute(builder: (context) => ProcessingPage()),
+      // );
     } else {
       ScaffoldMessenger.of(
         context,

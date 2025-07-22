@@ -1,38 +1,38 @@
 import 'package:flutter/material.dart';
+import 'processing.dart';
 import 'delivered.dart';
-import 'cancelled.dart';
 
-class Processing extends StatefulWidget {
-  const Processing({Key? key}) : super(key: key);
+class Cancelled extends StatelessWidget {
+  const Cancelled({Key? key}) : super(key: key);
 
-  @override
-  _ProcessingState createState() => _ProcessingState();
-}
+  final List<String> tabs = const ['Processing', 'Delivered', 'Canceled'];
 
-class _ProcessingState extends State<Processing> {
-  int selectedIndex = 0;
-
-  final List<String> tabs = ['Processing', 'Delivered', 'Canceled'];
-
-  void _onTabTap(int index) {
-    if (index == selectedIndex) return;
-
-    if (index == 1) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const Delivered()),
-      );
-    } else if (index == 2) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const Cancelled()),
-      );
-    }
-    // index 0 (Processing) already active
+  // Custom slide transition (Left to Right)
+  void navigateWithSlideLeft(BuildContext context, Widget page) {
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 300),
+        pageBuilder: (context, animation, secondaryAnimation) => page,
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          const begin = Offset(-1.0, 0.0); // Slide from left
+          const end = Offset.zero;
+          final tween = Tween(begin: begin, end: end).chain(
+            CurveTween(curve: Curves.easeInOut),
+          );
+          return SlideTransition(
+            position: animation.drive(tween),
+            child: child,
+          );
+        },
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    int selectedIndex = 2;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
@@ -52,7 +52,14 @@ class _ProcessingState extends State<Processing> {
                   children: List.generate(tabs.length, (index) {
                     final isSelected = selectedIndex == index;
                     return GestureDetector(
-                      onTap: () => _onTabTap(index),
+                      onTap: () {
+                        if (index == 0) {
+                          navigateWithSlideLeft(context, const Processing());
+                        } else if (index == 1) {
+                          navigateWithSlideLeft(context, const Delivered());
+                        }
+                        // index == 2 is current page
+                      },
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                         decoration: BoxDecoration(
@@ -72,21 +79,20 @@ class _ProcessingState extends State<Processing> {
                 ),
               ),
             ),
-
             const SizedBox(height: 25),
             buildCartItem(
-              imageUrl: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=150&q=80',
-              title: 'Nike Sneakers',
-              colorAndSize: 'Red  |  Size 40',
-              trackingId: 'IWH345891',
-              price: '\$120.00',
+              imageUrl: 'https://m.media-amazon.com/images/I/61q2Q0xHlAL._AC_UL1000_.jpg',
+              title: 'Baby shoes',
+              colorAndSize: 'Blue  |  Size 3',
+              price: '\$80.00',
+              cancelDate: '7 July 2025',
             ),
             buildCartItem(
-              imageUrl: "https://up.yimg.com/ib/th/id/OIP.johRj4ZhziWlMPaooxBmKwHaHa?pid=Api&rs=1&c=1&qlt=95&w=121&h=121",
-              title: 'Yellow shirt',
-              colorAndSize: 'Bright yellow  |  9M - 12M',
-              trackingId: 'IWH345892',
-              price: '\$120.25',
+              imageUrl: "https://tse2.mm.bing.net/th/id/OIP.jpCoLB8tcoa9kDJ7QRKQ0wHaJD?pid=Api&P=0&h=220",
+              title: 'Coastal romper',
+              colorAndSize: 'Sky blue  |  61CM - 68CM',
+              price: '\$100.25',
+              cancelDate: '4 July 2025',
             ),
           ],
         ),
@@ -98,8 +104,8 @@ class _ProcessingState extends State<Processing> {
     required String imageUrl,
     required String title,
     required String colorAndSize,
-    required String trackingId,
     required String price,
+    required String cancelDate,
   }) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -146,11 +152,6 @@ class _ProcessingState extends State<Processing> {
                     const SizedBox(height: 4),
                     Text(colorAndSize, style: const TextStyle(fontSize: 14)),
                     const SizedBox(height: 2),
-                    Text(
-                      "Tracking id : $trackingId",
-                      style: const TextStyle(fontSize: 13, color: Colors.black54),
-                    ),
-                    const SizedBox(height: 2),
                     RichText(
                       text: TextSpan(
                         text: "Total : ",
@@ -166,6 +167,15 @@ class _ProcessingState extends State<Processing> {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Cancelled on: $cancelDate",
+                      style: const TextStyle(
+                        color: Color(0xFFF14142),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -175,14 +185,14 @@ class _ProcessingState extends State<Processing> {
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
-                 color: const Color(0xFFF1E9FF),
+                  color: const Color(0xFFF1E9FF),
               borderRadius: BorderRadius.circular(8),
             ),
             child: TextButton(
               onPressed: () {},
               child: const Text(
                 "View Product details",
-                 style: TextStyle(
+                style: TextStyle(
                  color: Color(0xFF8D4EF3),
                   fontWeight: FontWeight.bold,
                 ),

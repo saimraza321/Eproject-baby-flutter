@@ -1,7 +1,12 @@
 import 'package:device_preview/device_preview.dart';
-import 'package:eprojectbaby/frontend/login.dart';
+import 'package:eprojectbaby/frontend/cancelled.dart';
+import 'package:eprojectbaby/frontend/delivered.dart';
+import 'package:eprojectbaby/frontend/home.dart';
 import 'package:eprojectbaby/frontend/onboarding.dart';
-import 'package:eprojectbaby/frontend/signup.dart';
+import 'package:eprojectbaby/frontend/processing.dart';
+import 'package:eprojectbaby/frontend/product_detail_page.dart';
+import 'package:eprojectbaby/frontend/signin_screen.dart';
+import 'package:eprojectbaby/frontend/signup_screen.dart';
 import 'package:eprojectbaby/frontend/splashscreen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
@@ -39,8 +44,13 @@ class MyApp extends StatelessWidget {
       home: Splashscreen(),
       routes: {
         "/onboarding": (context) => OnboardingScreen(),
-        '/login': (context) => const LoginPage(),
-        '/signup': (context) => const SignupPage(),
+        '/login': (context) => const SignInScreen(),
+        '/signup': (context) => const SignUpScreen(),
+        '/processing': (context) => const Processing(),
+        '/delivered': (context) => const Delivered(),
+        '/canceled': (context) => const Cancelled(),
+        // '/productdetail': (context) =>  ProductDetailPage(image: '', title: '', price: , originalPrice: null, description: '',),
+        '/home': (context) =>  HomePage(),
       },
     );
   }
